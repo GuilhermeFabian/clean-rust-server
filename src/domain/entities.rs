@@ -1,9 +1,27 @@
+#[derive(PartialEq, Clone)]
 pub struct PokemonNumber(u16);
 pub struct PokemonName(String);
 pub struct PokemonTypes(Vec<PokemonType>);
 
 enum PokemonType {
     Electric,
+    Fire,
+}
+
+pub struct Pokemon {
+    pub number: PokemonNumber,
+    name: PokemonName,
+    types: PokemonTypes,
+}
+
+impl Pokemon {
+    pub fn new(number: PokemonNumber, name: PokemonName, types: PokemonTypes) -> Self {
+        Self {
+            number,
+            name,
+            types,
+        }
+    }
 }
 
 impl TryFrom<u16> for PokemonNumber {
@@ -63,6 +81,7 @@ impl TryFrom<String> for PokemonType {
     fn try_from(a_type: String) -> Result<Self, Self::Error> {
         match a_type.as_str() {
             "Electric" => Ok(Self::Electric),
+            "Fire" => Ok(Self::Fire),
             _ => Err(()),
         }
     }
