@@ -1,20 +1,22 @@
+use std::sync::Arc;
+
 use super::entities::{ PokemonName, PokemonNumber, PokemonTypes };
 use crate::repositories::pokemon::{ InMemoryRepository, Repository, Insert };
 
-struct Request {
-    number: u16,
-    name: String,
-    types: Vec<String>,
+pub struct Request {
+    pub number: u16,
+    pub name: String,
+    pub types: Vec<String>,
 }
 
-enum Response {
+pub enum Response {
     Ok(u16),
     BadRequest,
     Conflict,
     Error,
 }
 
-fn execute(repository: &mut dyn Repository, request: Request) -> Response {
+pub fn execute(repository: Arc<dyn Repository>, request: Request) -> Response {
     match (
         PokemonNumber::try_from(request.number),
         PokemonName::try_from(request.name),
@@ -38,7 +40,7 @@ mod tests {
     #[test]
     fn it_should_return_the_pokemon_number_otherwise() {
         let number = 25;
-        let mut repository = InMemoryRepository::new();
+        let repository = Arc::new(InMemoryRepository::new());
 
         let req = Request {
             number,
@@ -46,7 +48,7 @@ mod tests {
             types: vec![String::from("Electric")],
         };
 
-        let response = execute(&mut repository, req);
+        let response = execute(repository, req);
 
         match response {
             Response::Ok(response_number) => assert_eq!(response_number, number),
@@ -56,7 +58,7 @@ mod tests {
 
     #[test]
     fn it_should_return_a_bad_request_error_when_request_is_invalid() {
-        let mut repository = InMemoryRepository::new();
+        let mut repository = Arc::new(InMemoryRepository::new());
 
         let request = Request {
             number: 25,
@@ -64,7 +66,7 @@ mod tests {
             types: vec![String::from("Electric")],
         };
 
-        let response = execute(&mut repository, request);
+        let response = execute(repository, request);
 
         match response {
             Response::BadRequest => {}
@@ -77,7 +79,7 @@ mod tests {
         let number = PokemonNumber::try_from(25).unwrap();
         let name = PokemonName::try_from(String::from("Pikachu")).unwrap();
         let types = PokemonTypes::try_from(vec![String::from("Electric")]).unwrap();
-        let mut repository = InMemoryRepository::new();
+        let mut repository = Arc::new(InMemoryRepository::new());
 
         repository.insert(number, name, types);
 
@@ -87,7 +89,7 @@ mod tests {
             types: vec![String::from("Fire")],
         };
 
-        let response = execute(&mut repository, request);
+        let response = execute(repository, request);
 
         match response {
             Response::Conflict => {}
@@ -97,7 +99,7 @@ mod tests {
 
     #[test]
     fn it_should_return_an_error_when_an_unexpected_error_happens() {
-        let mut repository = InMemoryRepository::new().with_error();
+        let mut repository = Arc::new(InMemoryRepository::new().with_error());
         let number = 25;
         let request = Request {
             number,
@@ -105,7 +107,7 @@ mod tests {
             types: vec![String::from("Electric")],
         };
 
-        let response = execute(&mut repository, request);
+        let response = execute(repository, request);
 
         match response {
             Response::Error => {}
